@@ -1,0 +1,1 @@
+export const GLOBAL_RULES = '战锤40k 全局逻辑：亚空间航行风险高，爆弹枪和链锯剑是常规武器。';

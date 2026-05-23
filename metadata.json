@@ -1,0 +1,8 @@
+{
+  "name": "战锤40K：无尽战火 v1.14",
+  "description": "基于战锤40K世界观的沉浸式文字推演RPG。包含动态叙事、深核数值判定及全量装备库。",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,28 @@
+import { CADIAN_SHOCK_TROOPS_BESTIARY } from './cadian_shock_troops';
+export { CADIAN_SHOCK_TROOPS_BESTIARY };
+import { CATACHAN_JUNGLE_FIGHTERS_BESTIARY } from './catachan_jungle_fighters';
+export { CATACHAN_JUNGLE_FIGHTERS_BESTIARY };
+import { DEATH_KORPS_OF_KRIEG_BESTIARY } from './death_korps_of_krieg';
+export { DEATH_KORPS_OF_KRIEG_BESTIARY };
+import { VALHALLAN_ICE_WARRIORS_BESTIARY } from './valhallan_ice_warriors';
+export { VALHALLAN_ICE_WARRIORS_BESTIARY };
+import { MORDIAN_IRON_GUARD_BESTIARY } from './mordian_iron_guard';
+export { MORDIAN_IRON_GUARD_BESTIARY };
+import { TALLARN_DESERT_RAIDERS_BESTIARY } from './tallarn_desert_raiders';
+export { TALLARN_DESERT_RAIDERS_BESTIARY };
+import { ARMAGEDDON_STEEL_LEGION_BESTIARY } from './armageddon_steel_legion';
+export { ARMAGEDDON_STEEL_LEGION_BESTIARY };
+import { VOSTROYAN_FIRSTBORN_BESTIARY } from './vostroyan_firstborn';
+export { VOSTROYAN_FIRSTBORN_BESTIARY };
+import { TANITH_FIRST_AND_ONLY_BESTIARY } from './tanith_first_and_only';
+export { TANITH_FIRST_AND_ONLY_BESTIARY };
+import { SAVLAR_CHEM_DOGS_BESTIARY } from './savlar_chem_dogs';
+export { SAVLAR_CHEM_DOGS_BESTIARY };
+import { VENTRILLIAN_NOBLES_BESTIARY } from './ventrillian_nobles';
+export { VENTRILLIAN_NOBLES_BESTIARY };
+import { CADIAN_REMNANTS_BESTIARY } from './cadian_remnants';
+export { CADIAN_REMNANTS_BESTIARY };
+import { pdfUnits } from './pdf';
+export { pdfUnits };
+export const ASTRA_MILITARUM_BESTIARY = {
+    ...CADIAN_SHOCK_TROOPS_BESTIARY, ...CATACHAN_JUNGLE_FIGHTERS_BESTIARY, ...DEATH_KORPS_OF_KRIEG_BESTIARY, ...VALHALLAN_ICE_WARRIORS_BESTIARY, ...MORDIAN_IRON_GUARD_BESTIARY, ...TALLARN_DESERT_RAIDERS_BESTIARY, ...ARMAGEDDON_STEEL_LEGION_BESTIARY, ...VOSTROYAN_FIRSTBORN_BESTIARY, ...TANITH_FIRST_AND_ONLY_BESTIARY, ...SAVLAR_CHEM_DOGS_BESTIARY, ...VENTRILLIAN_NOBLES_BESTIARY, ...CADIAN_REMNANTS_BESTIARY, ...pdfUnits, };

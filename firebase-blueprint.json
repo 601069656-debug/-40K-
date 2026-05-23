@@ -1,0 +1,70 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["email", "displayName", "photoURL", "createdAt"]
+    },
+    "GameState": {
+      "title": "GameState",
+      "description": "User's active game state",
+      "type": "object",
+      "properties": {
+        "status": { "type": "string" }
+      }
+    },
+    "NPCProfile": {
+      "title": "NPCProfile",
+      "description": "NPCs in the game",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["name", "status"]
+    },
+    "LogSummary": {
+      "title": "LogSummary",
+      "description": "Log summary for the game history",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "timestamp": { "type": "number" }
+      }
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Game history message",
+      "type": "object",
+      "properties": {
+        "role": { "type": "string" },
+        "content": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/games/{userId}": {
+      "schema": "GameState",
+      "description": "User's active game state"
+    },
+    "/games/{userId}/npcs/{npcId}": {
+      "schema": "NPCProfile",
+      "description": "NPC profiles owned by the user"
+    },
+    "/games/{userId}/logs/{logId}": {
+      "schema": "LogSummary",
+      "description": "Logs owned by the user"
+    },
+    "/games/{userId}/history/{messageId}": {
+      "schema": "Message",
+      "description": "History messages owned by the user"
+    }
+  }
+}

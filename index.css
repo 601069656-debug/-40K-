@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Noto+Sans+SC:wght@300;400;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'JetBrains Mono', 'Noto Sans SC', monospace;
+  --font-serif: 'JetBrains Mono', 'Noto Sans SC', monospace;
+  --font-display: 'JetBrains Mono', 'Noto Sans SC', monospace;
+  --font-mono: 'JetBrains Mono', 'Noto Sans SC', monospace;
+  
+  --color-imperial-red: #8b0000;
+  --color-imperial-gold: #c5a059;
+  --color-leadbelcher: #2d2d2d;
+  --color-mechanicus-gray: #1a1b1e;
+}
+
+@layer base {
+  html, body, #root {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  body {
+    @apply bg-black text-zinc-400 antialiased selection:bg-red-900/50;
+    background-image: 
+      radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 0.8) 0%, rgba(0, 0, 0, 1) 100%),
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0px, transparent 1px, transparent 2px);
+    background-attachment: fixed;
+  }
+  
+  html {
+     font-size: 16px;
+  }
+}
+
+@layer components {
+  /* 帝国终端扫描线效果 */
+  .imperial-terminal {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .imperial-terminal::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+    z-index: 2;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+    opacity: 0.3;
+  }
+
+  /* 混沌终端扫描线效果 */
+  .chaos-terminal {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .chaos-terminal::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(30, 0, 0, 0) 50%, rgba(40, 0, 0, 0.35) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.1), rgba(139, 0, 0, 0.05), rgba(80, 0, 0, 0.1));
+    z-index: 2;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+    opacity: 0.35;
+  }
+
+  /* 硬核边框系列 */
+  .hardcore-border {
+    @apply border-2 border-zinc-800 shadow-[inset_0_0_15px_rgba(0,0,0,0.8)];
+    clip-path: polygon(
+      0 10px, 10px 0, 
+      calc(100% - 10px) 0, 100% 10px, 
+      100% calc(100% - 10px), calc(100% - 10px) 100%, 
+      10px 100%, 0 calc(100% - 10px)
+    );
+  }
+
+  .mech-panel {
+    @apply bg-zinc-950/80 border border-zinc-900 backdrop-blur-md relative;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5), inset 0 0 1px rgba(255,255,255,0.05);
+  }
+
+  /* 状态危险指示器 */
+  .hazard-stripes {
+    background: repeating-linear-gradient(
+      45deg,
+      #111,
+      #111 10px,
+      #1a1a1a 10px,
+      #1a1a1a 20px
+    );
+  }
+
+  .glow-red {
+    text-shadow: 0 0 8px rgba(220, 38, 38, 0.6);
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-black/40;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-zinc-800 border border-white/5;
+  }
+}

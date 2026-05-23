@@ -1,0 +1,208 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // ===============================================================
+    // Global Primitives
+    // ===============================================================
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "lastry@foxmail.com" || 
+        request.auth.token.email == "lastry-thone@hotmail.com" || 
+        request.auth.token.email == "lastry0013@gmail.com" ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isHighlyVerified() {
+      return isVerified() || isAdmin();
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidTimestamp(val) {
+      return val == request.time;
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // ===============================================================
+    // Validators (The "Anti-Update-Gap")
+    // ===============================================================
+    
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['email', 'displayName', 'photoURL', 'createdAt']) &&
+             (data.keys().size() == 4 || (data.keys().size() == 5 && 'uid' in data && data.uid == userId)) &&
+             data.email is string && data.email.size() > 0 && data.email.size() <= 200 &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 200 &&
+             data.photoURL is string && data.photoURL.size() > 0 && data.photoURL.size() <= 3000 &&
+             isValidTimestamp(data.createdAt);
+    }
+    
+    function isValidUserProfileUpdate(data) {
+      return (!('displayName' in data) || (data.displayName is string && data.displayName.size() > 0 && data.displayName.size() <= 200)) &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() > 0 && data.photoURL.size() <= 3000));
+    }
+
+    function isValidGameState(data) {
+      return data.keys().hasAll(['status', 'difficulty', 'lastUpdated']) &&
+             data.status in ['START_MENU', 'CREATION', 'STAGE_SETUP', 'PLAYING', 'GAME_OVER'] &&
+             data.difficulty in ['normal', 'grand'] &&
+             isValidTimestamp(data.lastUpdated) &&
+             (!('character' in data) || data.character == null || (data.character is map && data.character.name is string && data.character.name.size() <= 100)) &&
+             (!('stageSettings' in data) || data.stageSettings == null || (data.stageSettings is string && data.stageSettings.size() <= 5000)) &&
+             (!('selectedStages' in data) || (data.selectedStages is list && data.selectedStages.size() <= 20)) &&
+             (!('gaiaState' in data) || data.gaiaState == null || (data.gaiaState is map && data.gaiaState.lastUpdated is number));
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['id', 'role', 'content']) &&
+             isValidId(data.id) &&
+             data.role in ['user', 'model'] &&
+             data.content is string && data.content.size() > 0 && data.content.size() <= 100000 &&
+             (!('groundingMetadata' in data) || data.groundingMetadata is map) &&
+             (!('snapshot' in data) || data.snapshot is map);
+    }
+
+    function isValidNPC(data) {
+      return data.keys().hasAll(['id', 'name', 'lastUpdated', 'aiGeneratedRecord', 'userNotes', 'status', 'tags', 'records', 'bondLevel', 'resistance', 'nextMilestone']) &&
+             isValidId(data.id) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+             isValidTimestamp(data.lastUpdated) &&
+             data.aiGeneratedRecord is string && data.aiGeneratedRecord.size() <= 60000 &&
+             data.userNotes is string && data.userNotes.size() <= 20000 &&
+             data.status is string && data.status.size() <= 500 &&
+             data.tags is list && data.tags.size() <= 100 &&
+             data.records is list && data.records.size() <= 500 &&
+             data.bondLevel is number && data.bondLevel >= 0 && data.bondLevel <= 10 &&
+             data.resistance in ['Low', 'Medium', 'High', 'Extreme'] &&
+             data.nextMilestone is string && data.nextMilestone.size() <= 1000 &&
+             (!('attributes' in data) || (data.attributes is map)) &&
+             (!('hiddenNotes' in data) || (data.hiddenNotes is string && data.hiddenNotes.size() <= 10000));
+    }
+
+    function isValidLog(data) {
+      return data.keys().hasAll(['id', 'timestamp', 'title', 'date', 'days']) &&
+             isValidId(data.id) &&
+             data.timestamp is number &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 1000 &&
+             data.date is string && data.date.size() > 0 && data.date.size() <= 200 &&
+             data.days is list && data.days.size() <= 1000 &&
+             (!('npcUpdates' in data) || (data.npcUpdates is list && data.npcUpdates.size() <= 200));
+    }
+
+    function isValidWarzoneBriefing(data, userId) {
+      return data.keys().hasAll(['userId', 'content', 'updatedAt']) &&
+             data.userId == userId &&
+             data.content is string && data.content.size() <= 1000000 &&
+             data.updatedAt is number;
+    }
+
+    // ===============================================================
+    // Master Gates (Match Rules)
+    // ===============================================================
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isHighlyVerified() && isValidUserProfile(incoming(), userId);
+      allow update: if isOwner(userId) && isHighlyVerified() && (
+        isValidUserProfileUpdate(incoming()) && (
+          incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL']) ||
+          (incoming().email == existing().email && incoming().createdAt == existing().createdAt && 
+           incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL']))
+        )
+      );
+    }
+
+    match /admins/{userId} {
+      allow get: if isAdmin();
+    }
+
+    match /games/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow create: if isValidId(userId) && isOwner(userId) && isHighlyVerified() && isValidGameState(incoming());
+      
+      allow update: if isValidId(userId) && isOwner(userId) && isHighlyVerified() && (
+        isAdmin() || (
+          // Terminal State Locking: Cannot update after GAME_OVER unless admin
+          existing().status != 'GAME_OVER' &&
+          isValidGameState(incoming()) && 
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'status', 'character', 'difficulty', 'stageSettings', 'selectedStages', 'gaiaState', 'lastUpdated'
+          ])
+        )
+      );
+      
+      allow delete: if isValidId(userId) && (isOwner(userId) || isAdmin());
+
+      match /history/{messageId} {
+        allow get: if isValidId(userId) && isValidId(messageId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId);
+        
+        allow create: if isValidId(userId) && isOwner(userId) && isHighlyVerified() && isValidId(messageId) && isValidMessage(incoming());
+        allow update: if isValidId(userId) && isOwner(userId) && isHighlyVerified() && isValidId(messageId) && (
+          isValidMessage(incoming()) && (
+            incoming().diff(existing()).affectedKeys().hasOnly(['content'])
+          )
+        );
+        allow delete: if isValidId(userId) && isOwner(userId) && isHighlyVerified() && isValidId(messageId);
+      }
+
+      match /npcs/{npcId} {
+        allow get: if isValidId(userId) && isValidId(npcId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId);
+        
+        allow create: if isValidId(userId) && isOwner(userId) && isHighlyVerified() && isValidId(npcId) && isValidNPC(incoming());
+        allow update: if isValidId(userId) && isOwner(userId) && isHighlyVerified() && isValidId(npcId) && (
+          isValidNPC(incoming()) && (
+            isAdmin() || (
+              incoming().id == existing().id &&
+              incoming().name == existing().name &&
+              isValidTimestamp(incoming().lastUpdated) &&
+              incoming().diff(existing()).affectedKeys().hasOnly(['aiGeneratedRecord', 'userNotes', 'status', 'tags', 'records', 'bondLevel', 'resistance', 'nextMilestone', 'attributes', 'parameters', 'trait', 'skill', 'equipment', 'items', 'hiddenNotes', 'lastUpdated', 'isTrueNameUnlocked'])
+            )
+          )
+        );
+        allow delete: if isValidId(userId) && isOwner(userId) && isHighlyVerified() && isValidId(npcId);
+      }
+
+      match /logs/{logId} {
+        allow get: if isValidId(userId) && isValidId(logId) && isOwner(userId);
+        allow list: if isValidId(userId) && isOwner(userId);
+        
+        allow create: if isValidId(userId) && isOwner(userId) && isHighlyVerified() && isValidId(logId) && isValidLog(incoming());
+        allow update: if isValidId(userId) && isOwner(userId) && isHighlyVerified() && isValidId(logId) && (
+          isValidLog(incoming())
+        );
+        allow delete: if isValidId(userId) && isOwner(userId) && isHighlyVerified() && isValidId(logId);
+      }
+    }
+
+    match /users/{userId}/briefing/{briefingId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidId(briefingId) && isValidWarzoneBriefing(incoming(), userId);
+      allow update: if isOwner(userId) && isValidId(briefingId) && isValidWarzoneBriefing(incoming(), userId) &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['content', 'updatedAt']);
+    }
+
+  }
+}
